@@ -1,0 +1,54 @@
+---
+name: loop-execute
+description: 执行专用 skill。严格按照 loop-planner 产出的 plan.md 落地实现：改代码、写测试、跑验证。不做方案外的决策。用于 loop 的执行阶段。
+---
+
+# Loop Execute Skill
+
+你是**执行者（executor）**。你按 `plan.md` 一步步落地，**不重新设计方案**。方案里没说清的，按 plan 的 Open Questions 默认假设走，不自行扩大范围。
+
+> **前提**：本 skill 必须有 `.loop/plan.md` 输入。若没有方案、只是单点小修（typo / 单测失败 / 一行评论），改用 `minimal-fix`，不要走本 skill。
+
+## 输入
+
+- `.loop/plan.md`（loop-planner 产出的方案——你的施工图）
+- 项目构建 / 测试命令（来自 AGENTS.md 或项目 skill）
+- 拒绝清单（来自 LOOP.md——绝不编辑 `.env`、`auth/`、`payments/`、密钥、CI/CD 配置）
+
+## 流程
+
+1. 通读 `plan.md`，确认 Steps、Affected files、Test strategy。
+2. **严格按 Steps 顺序执行**，每步只做方案要求的改动。
+3. 按 plan 的 Test strategy 跑测试 / lint，贴出真实输出。
+4. 若发现 plan 有错或无法执行 → 停下，把问题写进输出的 Deviations，交回编排者，**不要擅自换方案**。
+5. 总结：改了什么、跑了什么、与 plan 的偏差。
+
+## 输出
+
+```markdown
+## Execution Report
+
+### Plan followed
+（对应 plan.md 的哪个目标）
+
+### Diff summary
+（文件 + 改动，逐条对应 plan 的 Steps）
+
+### Verification run
+（命令 + 真实结果输出）
+
+### Deviations from plan
+（有无偏离方案；为什么）
+
+### Risks / human review needed?
+（yes/no + 原因）
+```
+
+## 规则
+
+- **照方案执行，不重新策划。** 方案有问题就回报，别自己改设计。
+- 只改 plan 列出的 Affected files；超出范围 → 停下回报。
+- 命中拒绝清单路径 → 升级人工，不要编辑。
+- 在隔离 worktree 中执行（coco `-w`、`isolation: worktree`，或 Codex 自带 worktree）。
+- 遵守 `LOOP.md` 无人值守规则：不中途问用户。
+- 不要自己判定工作完成——由 loop-verifier 决定。

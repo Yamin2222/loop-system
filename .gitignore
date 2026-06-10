@@ -1,0 +1,5 @@
+# loop 运行产物（不提交）
+.loop/
+
+# 参考资料（外部 clone，不随本仓库提交）
+reference/
