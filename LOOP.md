@@ -106,8 +106,11 @@ verifier 默认 REJECT，除非证据充分。
 # L1 单次 triage（coco）
 bash scripts/run-loop.sh triage
 
-# 本地聚合门禁：语法 + 生成物漂移 + STATE 新鲜度
-bash scripts/check-loop.sh 240
+# 代码健康门禁：语法 + 生成物漂移（适合 CI，结果不随时间漂移）
+bash scripts/check-loop.sh
+
+# 运行态门禁：额外检查 STATE 新鲜度（适合本地确认 loop 刚跑过）
+bash scripts/check-loop.sh --state 240
 
 # 只检查多工具 skill / agent 生成物是否漂移
 bash scripts/sync-skills.sh --check
