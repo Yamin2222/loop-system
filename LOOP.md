@@ -64,6 +64,8 @@ bash scripts/sync-skills.sh
 
 先跑 L1 一到两周，triage 质量稳定后再开 L2 三角色流程，长期信任后才考虑 L3。
 
+> **L2 fix 前置**：worktree 子代理要求仓库至少有一次 commit（有效 HEAD）。空仓库请先完成初始 commit，否则 `run-loop.sh fix` 会以退出码 2 提示需人工。
+
 ## 人工门槛（Human Gates）
 
 - 设计决策、多文件重构 → 人工
@@ -103,6 +105,12 @@ verifier 默认 REJECT，除非证据充分。
 ```bash
 # L1 单次 triage（coco）
 bash scripts/run-loop.sh triage
+
+# 本地聚合门禁：语法 + 生成物漂移 + STATE 新鲜度
+bash scripts/check-loop.sh 240
+
+# 只检查多工具 skill / agent 生成物是否漂移
+bash scripts/sync-skills.sh --check
 
 # 挂 cron：每个工作日 08:00 跑 triage
 # 0 8 * * 1-5  cd /path/to/repo && bash scripts/run-loop.sh triage >> .loop/cron.log 2>&1

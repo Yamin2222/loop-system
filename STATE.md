@@ -23,8 +23,9 @@ Last run: 2026-06-10 17:59 CST
 
 <!-- 每轮 loop 在末尾追加一行，便于跨工具/跨轮次交接：
 格式: 时间戳 | skill | 工具 | 结果摘要
-例:   2026-06-10 08:15 | loop-triage | coco | findings=3 high=1 watch=2
-      2026-06-10 09:40 | minimal-fix | coco | #1241 fix proposed, verifier=REJECT
+例:   2026-06-10 08:15 | loop-triage | trae | findings=3 high=1 watch=2
+      2026-06-10 09:40 | minimal-fix | trae | #1241 fix proposed, verifier=REJECT
 -->
 
 2026-06-10 17:59 CST | loop-triage | trae | findings=0 high=0 watch=0
+2026-06-10 20:25 CST | loop | trae | STATE.md comment examples coco->trae, verifier=APPROVE
