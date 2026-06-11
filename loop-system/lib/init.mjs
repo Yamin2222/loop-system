@@ -43,8 +43,8 @@ export function init(args) {
 
   console.log('\n== 完成。下一步 ==');
   console.log('  1. 编辑 STATE.md 第一行项目名（如需要）');
-  console.log('  2. 运行一次 L1：loop-system run triage');
-  console.log('  3. 校验：loop-system check');
+  console.log('  2. 打开 coco，在项目中输入：/loop status 或 /loop triage');
+  console.log('  3. CI/cron/调试时可运行：loop-system check');
   return 0;
 }
 

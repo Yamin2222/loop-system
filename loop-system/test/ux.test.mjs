@@ -147,3 +147,18 @@ test('low confidence natural language does not execute and suggests next command
   assert.match(output, /建议|run plan|run fix|run roadmap|status/);
   assert.equal(existsSync(marker), false);
 });
+
+test('init installs coco /loop command for in-cli usage', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'loop-ux-init-coco-'));
+  const result = runCli(cwd, ['init', cwd]);
+  const commandPath = join(cwd, '.trae', 'commands', 'loop.md');
+
+  assert.equal(result.status, 0);
+  assert.equal(existsSync(commandPath), true);
+  const command = readFileSync(commandPath, 'utf8');
+  assert.match(command, /description: loop 编排入口。在 coco 内使用/);
+  assert.match(command, /用户输入：\$ARGUMENTS/);
+  assert.match(command, /@loop-planner/);
+  assert.match(command, /@loop-verifier/);
+  assert.doesNotMatch(command, /npx @yaminzhou02\/loop-system/);
+});

@@ -161,28 +161,36 @@ verifier 默认 REJECT，除非证据充分。
 
 | 工具 | 触发 | 备注 |
 |------|------|------|
-| coco | `loop-system run`（cron 调度） | 用 `coco -p` 无头运行 |
+| coco | `/loop ...` | `.trae/commands/loop.md` 提供的交互入口 |
 | Claude Code | `/loop 1d Run $loop-triage ...` | 内置 /loop |
 | Codex | Automations tab，每日调 `$loop-triage` | 自带 worktree |
 
 ## 本地运行
 
-```bash
-# 推荐入口：直接描述目标，loop-system 会打印判断原因并路由到底层命令
-loop-system "修复 login 空指针"
-loop-system "从 0 构建一个待办事项 Web 应用"
+```text
+# coco 内推荐入口：直接描述目标，由 /loop 路由到 status/roadmap/plan/fix/watch
+/loop 修复 login 空指针
+/loop 从 0 构建一个待办事项 Web 应用
 
 # 查看当前任务、stage 接力、产物和最近日志
-loop-system status
+/loop status
 
 # L1 单次 triage（coco）
-loop-system run triage
+/loop triage
 
 # 项目级拆分：只生成 .loop/roadmap.md，不执行代码
-loop-system run roadmap "从 0 构建一个待办事项 Web 应用"
+/loop roadmap 从 0 构建一个待办事项 Web 应用
 
-# 代码健康门禁：语法 + 生成物漂移（适合 CI，结果不随时间漂移）
+# 单任务修复
+/loop plan 修复某个明确问题
+/loop fix 修复某个明确问题
+```
+
+```bash
+# CLI 维护入口（适合 CI/cron/调试）
 loop-system check
+loop-system sync --check
+loop-system run triage
 
 # 运行态门禁：额外检查 STATE 新鲜度（适合本地确认 loop 刚跑过）
 loop-system check --state 240

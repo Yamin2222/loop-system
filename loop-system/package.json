@@ -1,6 +1,6 @@
 {
   "name": "@yaminzhou02/loop-system",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "轻量三角色 loop engineering 系统脚手架与 CLI（coco / Claude Code / Codex）",
   "type": "module",
   "author": "yaminzhou02",

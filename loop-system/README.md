@@ -5,59 +5,67 @@
 核心能力：
 
 - `init`：把 loop skill 真源、状态模板和多工具 agent 配置安装到目标项目。
-- 自然语言入口：直接描述目标，自动路由到合适的 run/status 路径。
+- coco `/loop` 入口：直接描述目标，自动路由到合适的 status/roadmap/plan/fix/watch 路径。
 - `status`：一屏查看当前任务、stage 接力、关键产物和最近日志。
 - `run`：驱动 L1 triage、项目级 roadmap、L2 plan / fix 流程。
 - `watch`：支持多终端自动接力，按 plan → execute → verify 三角色串行推进。
 - `sync`：从 `.agents/skills/` 生成 `.trae/.claude/.codex` 配置，并支持漂移检查。
 - `verify` / `check`：提供 STATE 运行态门禁和时间无关的代码健康门禁。
 
-## 快速开始
+## 快速开始：初始化后在 coco 里用 `/loop`
 
 ```bash
-# 在目标项目根目录初始化
+# 在目标项目根目录初始化一次
 npx @yaminzhou02/loop-system init
+```
 
+然后打开 coco，在项目中直接使用：
+
+```text
+/loop status
+/loop 修复 login 空指针
+/loop 从 0 构建一个待办事项 Web 应用
+/loop plan 重构 X 模块的错误处理
+/loop fix 修复 login 空指针
+```
+
+`init` 会生成 `.trae/commands/loop.md`，这是 coco 内的主入口。`loop-system ...` CLI 仍可用于 CI、cron 和调试，但不需要把 `npx ... run ...` 当作日常交互方式。
+
+```bash
 # 检查生成物是否健康（适合 CI）
-npx @yaminzhou02/loop-system check
-
-# L1：只汇报，更新 STATE.md
-npx @yaminzhou02/loop-system run triage
-
-# 推荐入口：直接描述你想做什么
-npx @yaminzhou02/loop-system "修复 login 空指针"
-npx @yaminzhou02/loop-system "从 0 构建一个待办事项 Web 应用"
-
-# 查看当前进度、产物和最近日志
-npx @yaminzhou02/loop-system status
+loop-system check
 ```
 
 ## 常用命令
 
-```bash
-# 推荐：自然语言入口会先打印判断原因和将执行的底层命令
-loop-system "修复 login 空指针"
-loop-system "从 0 构建一个待办事项 Web 应用"
-loop-system status
+```text
+# 推荐：coco 内 /loop 会按目标选择 status/roadmap/plan/fix/watch
+/loop 修复 login 空指针
+/loop 从 0 构建一个待办事项 Web 应用
+/loop status
 
 # 项目级拆分：只生成 .loop/roadmap.md，不执行代码
-loop-system run roadmap "从 0 构建一个待办事项 Web 应用"
+/loop roadmap 从 0 构建一个待办事项 Web 应用
 
 # 重要项目可启用 council：drafter → challenger → arbiter，多模型复核，成本显著更高
-loop-system run roadmap --council "从 0 构建一个待办事项 Web 应用"
+/loop council 从 0 构建一个待办事项 Web 应用
 
 # L2-策划：只生成 .loop/plan.md
-loop-system run plan "修复某个明确问题"
+/loop plan 修复某个明确问题
 
 # L2-执行：严格照 .loop/plan.md 执行
-loop-system run execute "修复某个明确问题"
+/loop execute 修复某个明确问题
 
 # L2-校验：独立 verifier 写 .loop/verifier-report.md
-loop-system run verify-fix "修复某个明确问题"
+/loop verify-fix 修复某个明确问题
 
 # L2-全流程：planner → executor → verifier
-loop-system run fix "修复某个明确问题"
+/loop fix 修复某个明确问题
+```
 
+CLI 维护命令：
+
+```bash
 # 重新生成 .trae/.claude/.codex
 loop-system sync
 
@@ -77,31 +85,31 @@ loop-system verify 60
 loop-system run roadmap --council "从 0 构建一个待办事项 Web 应用" --retries 3 --retry-interval 60
 ```
 
-自然语言入口使用规则路由，不额外调用模型；它会打印“判断 / 命中 / 将执行”卡片。若输入太模糊或像拼错的子命令，会拒绝执行并给出建议，避免黑盒误判。
+coco `/loop` 入口不要求用户记 npm/npx 命令；它读取 `LOOP.md` / `STATE.md`，按规则选择 status、roadmap、plan、fix 或 watch，并委派已生成的 skill/agent。
 
 ## 状态与结果汇总
 
-```bash
-loop-system status
+```text
+/loop status
 ```
 
 `status` 纯读 `.loop/`，汇总当前 `taskId`、watch stage 接力、关键 artifact、verifier verdict 首行和最近 cron 日志。它不做语义判断；verdict 永远以 `.loop/verifier-report.md` 首行为准。
 
-`run plan/roadmap/execute/verify-fix/fix` 结束时会打印 `== Loop 结果 ==` 卡片，聚合目标、模式、退出码含义、关键产物和下一步建议。summary 只读已有 artifact，不新增模型调用，不替代 verifier 裁决。
+CLI `run plan/roadmap/execute/verify-fix/fix` 结束时会打印 `== Loop 结果 ==` 卡片，聚合目标、模式、退出码含义、关键产物和下一步建议。summary 只读已有 artifact，不新增模型调用，不替代 verifier 裁决。
 
 ## 项目级 Roadmap
 
 当目标是“从 0 构建完整项目”时，先生成项目级路线图：
 
-```bash
-loop-system run roadmap "从 0 构建一个待办事项 Web 应用"
+```text
+/loop roadmap 从 0 构建一个待办事项 Web 应用
 ```
 
 该命令只写 `.loop/roadmap.md`，不会写 `.loop/plan.md`，也不会执行代码。roadmap 中每个 milestone 都应包含 `Goal`、`Acceptance`、`Depends on` 和 `Suggested next command`。人审 roadmap 后，再挑选一个 milestone 进入 L2：
 
-```bash
-loop-system run plan "M1 — 初始化最小可运行骨架"
-loop-system run fix "M1 — 初始化最小可运行骨架"
+```text
+/loop plan M1 — 初始化最小可运行骨架
+/loop fix M1 — 初始化最小可运行骨架
 ```
 
 如果 `.loop/roadmap.md` 中仍有 `Open Questions`，建议先通过人工/对话澄清，不要无人值守执行后续 milestone。
@@ -110,8 +118,8 @@ loop-system run fix "M1 — 初始化最小可运行骨架"
 
 对重要项目可使用 council 模式：
 
-```bash
-loop-system run roadmap --council "从 0 构建一个待办事项 Web 应用"
+```text
+/loop council 从 0 构建一个待办事项 Web 应用
 ```
 
 该模式会要求 `roadmap-drafter → roadmap-challenger → roadmap-arbiter` 顺序协作，写入可审计的 `.loop/council.md`，并最终写 `.loop/roadmap.md`。机器门禁要求：council 记录非空、roadmap 包含 `## Roadmap:` 与 `### Milestones`；若 council verdict 为 `ESCALATE_HUMAN`，命令返回退出码 2。
@@ -133,17 +141,17 @@ loop-system run roadmap --council "从 0 构建一个待办事项 Web 应用" --
 
 ## 多终端自动接力（watch MVP）
 
-在同一个已初始化项目里开三个终端：
+在同一个已初始化项目里开三个 coco 终端：
 
-```bash
+```text
 # 终端 A：生成本轮任务与 plan.ready（MVP 阶段 plan 必须 --once）
-loop-system watch plan "修复某个明确问题" --once
+/loop watch plan 修复某个明确问题 --once
 
 # 终端 B：等待 plan.ready，自动执行，成功后写 execute.ready
-loop-system watch execute --once
+/loop watch execute --once
 
 # 终端 C：等待 execute.ready，自动校验，写 verify.done 和 verifier-report.md
-loop-system watch verify --once
+/loop watch verify --once
 ```
 
 watch 通过 `.loop/stage/*.json` 传递 `taskId`，下游只处理与 `current.json` 匹配的本轮任务，避免旧产物串台。`verify.done.json` 只是通知；最终裁决仍以 `.loop/verifier-report.md` 首行为准。

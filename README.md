@@ -18,14 +18,28 @@
 
 ---
 
-## 2. 安装（npm，推荐）
+## 2. 安装到项目，然后在 coco 里用
 
-在你的项目根目录：
+`@yaminzhou02/loop-system` 的 npm 命令主要用于**一次性初始化**和 CI/cron；日常交互入口是在 coco 里输入 `/loop ...`。
+
+在你的项目根目录初始化一次：
 
 ```bash
-# 脚手架：拷贝 .agents/LOOP.md/STATE.md，并自动生成 .trae/.claude/.codex 三套配置
+# 脚手架：拷贝 .agents/LOOP.md/STATE.md，并生成 .trae/.claude/.codex 配置
 npx @yaminzhou02/loop-system init .
 ```
+
+然后打开 coco，在项目里使用：
+
+```text
+/loop status
+/loop 修复 login 在空 token 时的空指针
+/loop 从 0 构建一个待办事项 Web 应用
+/loop plan 重构 X 模块的错误处理
+/loop fix 修复 login 空指针
+```
+
+初始化会生成 `.trae/commands/loop.md`，所以 `/loop` 是 coco 内的主入口；不需要把 `npx ... run ...` 当作日常用法。
 
 把这几条加进你项目的 `.gitignore`（init 会提示，不会自动覆盖）：
 
@@ -34,20 +48,20 @@ npx @yaminzhou02/loop-system init .
 .trae/worktrees/
 ```
 
-> 全局安装：`npm i -g @yaminzhou02/loop-system`，之后可直接用 `loop-system ...`。下文命令以 `loop-system` 代称（未全局装时前面加 `npx @yaminzhou02/`）。
+> `loop-system ...` CLI 仍保留给 CI、cron、发布前检查和调试使用；例如 `loop-system check`、`loop-system sync --check`、`loop-system run triage`。
 
 ---
 
 ## 3. 怎么用
 
-### 3.1 统一入口（最简单）
+### 3.1 coco 内统一入口（最简单）
 
-不用记子命令，直接说想做什么，系统**可解释地**判断该走哪条路径：
+不用记 npm/npx 子命令，在 coco 里直接 `/loop` 加目标，系统按规则判断该走哪条路径：
 
-```bash
-loop-system "修复 login 在空 token 时的空指针"
-loop-system "从 0 构建一个待办事项 Web 应用"
-loop-system "看看当前进度"
+```text
+/loop 修复 login 在空 token 时的空指针
+/loop 从 0 构建一个待办事项 Web 应用
+/loop status
 ```
 
 它会先打印判断卡片（命中了哪些关键词、按什么优先级选了哪条路径、将执行什么命令），再执行：
@@ -58,72 +72,72 @@ loop-system "看看当前进度"
 判断: roadmap
 命中: roadmap: 构建/项目; fix: 修复
 因为: 按优先级 status > council > roadmap > plan > fix，选择 roadmap
-将执行: loop-system run roadmap "修复整个项目的构建"
+将执行: roadmap
 ```
 
-判断不对就改措辞，或直接用下面的显式命令。低置信度 / 疑似拼错命令时不会瞎跑（退出码 2，给建议）。
+判断不对就改措辞，或直接用显式模式：`/loop plan ...`、`/loop fix ...`、`/loop roadmap ...`、`/loop council ...`。
 
 ### 3.2 查看进度
 
-```bash
-loop-system status
+```text
+/loop status
 ```
 一屏显示当前任务、各阶段、产物、verifier 裁决、最近日志（纯读 `.loop/`，零模型成本）。
 
 ### 3.3 单个改动（L2）
 
-```bash
+```text
 # 一把过：策划→执行→校验，APPROVE 才提示可提 PR（不自动合并）
-loop-system run fix "修复 login 空指针"
+/loop fix 修复 login 空指针
 
 # 想先审方案：先出 plan.md，你看完再执行
-loop-system run plan "重构 X 模块的错误处理"   # 产出 .loop/plan.md
-loop-system run fix  "重构 X 模块的错误处理"   # 复用 plan 执行
+/loop plan 重构 X 模块的错误处理   # 产出 .loop/plan.md
+/loop fix  重构 X 模块的错误处理   # 复用 plan 执行
 ```
 
 每轮结束打印结果卡片（做了什么 / 结果 / 产物 / 下一步）。
 
 ### 3.4 从 0 构建完整项目（项目级规划）
 
-大项目不要直接 `run fix`，先拆成里程碑：
+大项目不要直接 `fix`，先拆成里程碑：
 
-```bash
+```text
 # 项目级拆分：产出 .loop/roadmap.md（有序里程碑，每条带验收标准和"下一步命令"）
-loop-system run roadmap "从 0 构建一个待办事项 Web 应用"
+/loop roadmap 从 0 构建一个待办事项 Web 应用
 
 # 多模型磋商版（draft→challenge→arbiter，质量更高，成本显著更高）
-loop-system run roadmap --council "从 0 构建一个待办事项 Web 应用"
+/loop council 从 0 构建一个待办事项 Web 应用
 ```
 
 人审 `.loop/roadmap.md` 后，照里程碑逐条进 L2：
 
-```bash
-loop-system run plan "M1 — 初始化最小可运行骨架"
-loop-system run fix  "M1 — 初始化最小可运行骨架"
+```text
+/loop plan M1 — 初始化最小可运行骨架
+/loop fix  M1 — 初始化最小可运行骨架
 # M2、M3 ...
 ```
 
-> 复杂需求建议先用 coco / Claude 对话把方案聊清楚，再把最终目标交给 `run roadmap`。
+> 复杂需求建议先用 coco / Claude 对话把方案聊清楚，再把最终目标交给 `/loop roadmap ...`。
 
 ### 3.5 多终端自动接力（watch）
 
 策划/执行/校验分到不同终端，靠 `.loop/stage/*.json` 自动接力：
 
-```bash
+```text
 # 终端 A（先把 B、C 开起来等）
-loop-system watch plan "修复 login 空指针" --once
+/loop watch plan 修复 login 空指针 --once
 
 # 终端 B：等到 plan.ready 自动执行
-loop-system watch execute
+/loop watch execute
 
 # 终端 C：等到 execute.ready 自动校验
-loop-system watch verify
+/loop watch verify
 ```
 通过 taskId 防串台；`--interval`/`--timeout` 控制轮询。
 
 ### 3.6 排队/超时自动重试（opt-in）
 
-模型排队时让命令等了再试（默认不重试，显式开启）：
+CLI 模式可在模型排队时让命令等了再试（默认不重试，显式开启，适合 cron/CI）：
 
 ```bash
 loop-system run roadmap --council "项目" --retries 3 --retry-interval 60
@@ -138,6 +152,7 @@ loop-system run roadmap --council "项目" --retries 3 --retry-interval 60
 
 ### 3.8 Claude Code / Codex
 
+- **coco**：项目初始化后使用 `.trae/commands/loop.md` 提供的 `/loop ...`。
 - **Claude Code**：内置 `/loop`，如 `/loop 1d Run $loop-triage. 读 STATE.md，只汇报`。
 - **Codex**：Automations tab 建每日任务，prompt 写 `Run $loop-triage. 读 STATE.md，只汇报`。
 

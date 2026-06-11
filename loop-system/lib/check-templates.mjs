@@ -9,6 +9,8 @@ const repoRoot = dirname(packageRoot);
 export function checkTemplates({ root = repoRoot, pkg = packageRoot } = {}) {
   const rootSkills = join(root, '.agents', 'skills');
   const templateSkills = join(pkg, 'templates', '.agents', 'skills');
+  const rootCocoCommand = join(root, '.trae', 'commands', 'loop.md');
+  const templateCocoCommand = join(pkg, 'templates', '.trae', 'commands', 'loop.md');
 
   if (!existsSync(rootSkills)) {
     console.log('== template skills drift ==');
@@ -49,8 +51,23 @@ export function checkTemplates({ root = repoRoot, pkg = packageRoot } = {}) {
     console.log(`  [ok] ${name}/SKILL.md`);
   }
 
+  if (existsSync(rootCocoCommand) || existsSync(templateCocoCommand)) {
+    if (!existsSync(rootCocoCommand)) {
+      console.error('  [FAIL] 缺少根 coco /loop 命令: .trae/commands/loop.md');
+      failed = true;
+    } else if (!existsSync(templateCocoCommand)) {
+      console.error('  [FAIL] 缺少 npm 模板 coco /loop 命令: templates/.trae/commands/loop.md');
+      failed = true;
+    } else if (readFileSync(rootCocoCommand, 'utf8') !== readFileSync(templateCocoCommand, 'utf8')) {
+      console.error('  [FAIL] coco /loop 命令模板漂移: .trae/commands/loop.md');
+      failed = true;
+    } else {
+      console.log('  [ok] .trae/commands/loop.md');
+    }
+  }
+
   if (failed) {
-    console.error('请先同步根 .agents/skills 到 loop-system/templates/.agents/skills 后再发布');
+    console.error('请先同步根 .agents/skills 与 .trae/commands/loop.md 到 loop-system/templates 后再发布');
     return 1;
   }
   return 0;
@@ -66,4 +83,3 @@ function skillNames(dir) {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   process.exit(checkTemplates());
 }
-
