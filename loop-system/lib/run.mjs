@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { projectRoot } from './paths.mjs';
 import { verify } from './verify.mjs';
 import { assertStageMatchesCurrentIfPresent } from './stage.mjs';
+import { printRunSummary } from './summary.mjs';
 
 const tsNow = () => {
   const d = new Date();
@@ -366,28 +367,33 @@ export function run(args) {
   if (mode === 'plan') {
     if (!target) { console.error('用法: loop-system run plan "<目标描述>"'); return 1; }
     const result = runPlanOnce(root, target, ts, cocoOptions);
-    if (result.rc !== 0) return result.rc;
+    if (result.rc !== 0) { printRunSummary(root, { mode, target, rc: result.rc, artifactPaths: ['.loop/plan.md'] }); return result.rc; }
     cronLog(root, `[${tsNow()}] ${mode} 结束`);
+    printRunSummary(root, { mode, target, rc: 0, artifactPaths: ['.loop/plan.md'] });
     return 0;
   }
 
   if (mode === 'roadmap') {
     if (!target) { console.error('用法: loop-system run roadmap [--council] "<项目目标>"'); return 1; }
     const result = council ? runRoadmapCouncilOnce(root, target, ts, cocoOptions) : runRoadmapOnce(root, target, ts, cocoOptions);
-    if (result.rc !== 0) return result.rc;
+    const artifacts = council ? ['.loop/council.md', '.loop/roadmap.md'] : ['.loop/roadmap.md'];
+    if (result.rc !== 0) { printRunSummary(root, { mode, target, rc: result.rc, council, artifactPaths: artifacts }); return result.rc; }
     cronLog(root, `[${tsNow()}] ${mode} 结束`);
+    printRunSummary(root, { mode, target, rc: 0, council, artifactPaths: artifacts });
     return 0;
   }
 
   if (mode === 'execute') {
     if (!target) { console.error('用法: loop-system run execute "<目标描述>"'); return 1; }
     const result = runExecuteOnce(root, target, cocoOptions);
+    printRunSummary(root, { mode, target, rc: result.rc, artifactPaths: ['.loop/execute-output.md'] });
     return result.rc;
   }
 
   if (mode === 'verify-fix') {
     if (!target) { console.error('用法: loop-system run verify-fix "<目标描述>"'); return 1; }
     const result = runVerifyFixOnce(root, target, cocoOptions);
+    printRunSummary(root, { mode, target, rc: result.rc, artifactPaths: ['.loop/verifier-report.md', '.loop/verify-output.md'] });
     return result.rc;
   }
 
@@ -409,12 +415,14 @@ export function run(args) {
         '## Verdict: ESCALATE_HUMAN\n\nverifier 未落盘 .loop/verifier-report.md，checker 产物缺失，自动流程无法证明安全。诊断见 .loop/fix-output.md。\n');
       const msg = '[fix] 需人工（ESCALATE_HUMAN）：verifier 未落盘裁决，见 .loop/fix-output.md';
       console.error(msg); cronLog(root, msg);
+      printRunSummary(root, { mode, target, rc: 2, artifactPaths: ['.loop/plan.md', '.loop/verifier-report.md', '.loop/fix-output.md'] });
       return 2;
     }
     const report = readFileSync(reportPath, 'utf8');
     if (/^## Verdict: APPROVE$/m.test(report)) {
       cronLog(root, '[fix] verifier APPROVE — 可提议 PR（仍不自动合并）');
       cronLog(root, `[${tsNow()}] ${mode} 结束`);
+      printRunSummary(root, { mode, target, rc: 0, artifactPaths: ['.loop/plan.md', '.loop/verifier-report.md', '.loop/fix-output.md'] });
       return 0;
     }
     const vm = report.match(/^## Verdict:\s*(.*)$/m);
@@ -422,10 +430,12 @@ export function run(args) {
     if (verdict === 'ESCALATE_HUMAN') {
       const msg = '[fix] 需人工（ESCALATE_HUMAN），见 .loop/verifier-report.md';
       console.error(msg); cronLog(root, msg);
+      printRunSummary(root, { mode, target, rc: 2, artifactPaths: ['.loop/plan.md', '.loop/verifier-report.md', '.loop/fix-output.md'] });
       return 2;
     }
     const msg = `[fix] verifier 未通过（${verdict || 'unknown'}），见 .loop/verifier-report.md`;
     console.error(msg); cronLog(root, msg);
+    printRunSummary(root, { mode, target, rc: 1, artifactPaths: ['.loop/plan.md', '.loop/verifier-report.md', '.loop/fix-output.md'] });
     return 1;
   }
 

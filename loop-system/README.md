@@ -5,6 +5,8 @@
 核心能力：
 
 - `init`：把 loop skill 真源、状态模板和多工具 agent 配置安装到目标项目。
+- 自然语言入口：直接描述目标，自动路由到合适的 run/status 路径。
+- `status`：一屏查看当前任务、stage 接力、关键产物和最近日志。
 - `run`：驱动 L1 triage、项目级 roadmap、L2 plan / fix 流程。
 - `watch`：支持多终端自动接力，按 plan → execute → verify 三角色串行推进。
 - `sync`：从 `.agents/skills/` 生成 `.trae/.claude/.codex` 配置，并支持漂移检查。
@@ -21,11 +23,23 @@ npx @yaminzhou02/loop-system check
 
 # L1：只汇报，更新 STATE.md
 npx @yaminzhou02/loop-system run triage
+
+# 推荐入口：直接描述你想做什么
+npx @yaminzhou02/loop-system "修复 login 空指针"
+npx @yaminzhou02/loop-system "从 0 构建一个待办事项 Web 应用"
+
+# 查看当前进度、产物和最近日志
+npx @yaminzhou02/loop-system status
 ```
 
 ## 常用命令
 
 ```bash
+# 推荐：自然语言入口会先打印判断原因和将执行的底层命令
+loop-system "修复 login 空指针"
+loop-system "从 0 构建一个待办事项 Web 应用"
+loop-system status
+
 # 项目级拆分：只生成 .loop/roadmap.md，不执行代码
 loop-system run roadmap "从 0 构建一个待办事项 Web 应用"
 
@@ -62,6 +76,18 @@ loop-system verify 60
 # coco 排队/限流/超时时 opt-in 重试（默认不重试）
 loop-system run roadmap --council "从 0 构建一个待办事项 Web 应用" --retries 3 --retry-interval 60
 ```
+
+自然语言入口使用规则路由，不额外调用模型；它会打印“判断 / 命中 / 将执行”卡片。若输入太模糊或像拼错的子命令，会拒绝执行并给出建议，避免黑盒误判。
+
+## 状态与结果汇总
+
+```bash
+loop-system status
+```
+
+`status` 纯读 `.loop/`，汇总当前 `taskId`、watch stage 接力、关键 artifact、verifier verdict 首行和最近 cron 日志。它不做语义判断；verdict 永远以 `.loop/verifier-report.md` 首行为准。
+
+`run plan/roadmap/execute/verify-fix/fix` 结束时会打印 `== Loop 结果 ==` 卡片，聚合目标、模式、退出码含义、关键产物和下一步建议。summary 只读已有 artifact，不新增模型调用，不替代 verifier 裁决。
 
 ## 项目级 Roadmap
 

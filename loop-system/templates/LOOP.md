@@ -168,6 +168,13 @@ verifier 默认 REJECT，除非证据充分。
 ## 本地运行
 
 ```bash
+# 推荐入口：直接描述目标，loop-system 会打印判断原因并路由到底层命令
+loop-system "修复 login 空指针"
+loop-system "从 0 构建一个待办事项 Web 应用"
+
+# 查看当前任务、stage 接力、产物和最近日志
+loop-system status
+
 # L1 单次 triage（coco）
 loop-system run triage
 
