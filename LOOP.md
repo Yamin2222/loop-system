@@ -42,7 +42,7 @@ triage（loop-triage，汇报）
 | Skill | 持久化项目知识 | `loop-triage` / `loop-plan` / `loop-execute` / `minimal-fix` / `loop-verifier` |
 | Worktree | 隔离执行 | coco `-w` / `isolation: worktree`；Codex 自带 worktree |
 | State | 记忆 | `STATE.md`（含 append-only Activity Log） |
-| Schedule | 周期触发 | `loop-system run triage` + cron |
+| Schedule | 周期触发 | coco `/loop triage`（需要 cron 时再用维护 CLI） |
 | Gate | 产物门禁 | `loop-system verify` / `loop-system check`（退出码驱动） |
 
 ### 单一来源（勿手改生成物）
@@ -64,7 +64,7 @@ loop-system sync
 
 先跑 L1 一到两周，triage 质量稳定后再开 L2 三角色流程，长期信任后才考虑 L3。
 
-> **L2 fix 前置**：worktree 子代理要求仓库至少有一次 commit（有效 HEAD）。空仓库请先完成初始 commit，否则 `loop-system run fix` 会以退出码 2 提示需人工。
+> **L2 fix 前置**：worktree 子代理要求仓库至少有一次 commit（有效 HEAD）。空仓库请先完成初始 commit，否则 `/loop fix ...` 会提示需人工。
 
 ## 人工门槛（Human Gates）
 
@@ -96,16 +96,24 @@ verifier 默认 REJECT，除非证据充分。
 
 | 工具 | 触发 | 备注 |
 |------|------|------|
-| coco | `loop-system run ...`（cron 调度） | CLI 内部用 `coco -p` 无头运行 |
+| coco | `/loop ...` | `.trae/commands/loop.md` 提供的交互入口 |
 | Claude Code | `/loop 1d Run $loop-triage ...` | 内置 /loop |
 | Codex | Automations tab，每日调 `$loop-triage` | 自带 worktree |
 
 ## 本地运行
 
-```bash
+```text
 # L1 单次 triage（coco）
-loop-system run triage
+/loop triage
 
+# 单任务修复
+/loop fix 修复 login 空指针
+
+# 项目级拆分
+/loop roadmap 从 0 构建待办 Web 应用
+```
+
+```bash
 # 代码健康门禁：模块健康 + 生成物漂移（适合 CI，结果不随时间漂移）
 loop-system check
 
@@ -118,6 +126,5 @@ loop-system sync --check
 # 开发仓未 npm link 时，也可直接运行源码入口
 node loop-system/bin/loop.mjs check
 
-# 挂 cron：每个工作日 08:00 跑 triage
-# 0 8 * * 1-5  cd /path/to/repo && loop-system run triage >> .loop/cron.log 2>&1
+# 维护 CLI 只用于 CI / cron / 调试；日常交互请用 coco /loop。
 ```

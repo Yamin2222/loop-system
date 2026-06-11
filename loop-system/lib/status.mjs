@@ -14,7 +14,7 @@ export function status(args = []) {
 export function renderStatus(root) {
   const loop = join(root, '.loop');
   if (!existsSync(loop)) {
-    return `== Loop Status ==\n暂无 .loop/ 运行产物。\n下一步：可运行 loop-system "修复 xxx"、loop-system "从 0 构建 xxx"，或先执行 loop-system init。`;
+    return `== Loop Status ==\n暂无 .loop/ 运行产物。\n下一步：先执行 loop-system init，然后在 coco 中运行 /loop 修复 xxx、/loop 从 0 构建 xxx 或 /loop status。`;
   }
 
   const current = readJson(join(loop, 'stage', 'current.json'));

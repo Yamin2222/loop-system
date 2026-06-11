@@ -89,7 +89,7 @@ function parseRunArgs(args) {
   for (let i = 1; i < args.length; i++) {
     const a = args[i];
     if (a === '--council') {
-      if (mode !== 'roadmap') return { error: '--council 仅支持 run roadmap', mode };
+      if (mode !== 'roadmap') return { error: '--council 仅支持 /loop council 或底层 roadmap 模式', mode };
       council = true;
     } else if (a === '--retries') {
       const v = args[++i];
@@ -132,13 +132,13 @@ roadmap 必须使用以下结构：
 - Acceptance:
   - <可验收条件>
 - Depends on: none
-- Suggested next command: \`loop-system run plan "M1 — <垂直切片目标>"\`
+- Suggested next command: \`/loop plan M1 — <垂直切片目标>\`
 
 ### Risks / Architecture Decisions
 
 ### Open Questions
 
-milestones 必须是可独立验收的垂直切片，可逐个交给 run plan 或 run fix。不确定项写入 Open Questions，不要中途提问或硬猜。项目目标：${target}`;
+milestones 必须是可独立验收的垂直切片，可逐个交给 /loop plan 或 /loop fix。不确定项写入 Open Questions，不要中途提问或硬猜。项目目标：${target}`;
 
 const promptRoadmapCouncil = (target) =>
   `读 LOOP.md 与 STATE.md。以 council 模式为以下项目目标生成项目级 roadmap。必须按顺序委派 @roadmap-drafter、@roadmap-challenger、@roadmap-arbiter，最多 2 轮；任何角色无法完成都不要假装成功，不要 fallback 到单 planner。
@@ -172,7 +172,7 @@ const promptRoadmapCouncil = (target) =>
 - Acceptance:
   - <可验收条件>
 - Depends on: none
-- Suggested next command: \`loop-system run plan "M1 — <垂直切片目标>"\`
+- Suggested next command: \`/loop plan M1 — <垂直切片目标>\`
 
 ### Risks / Architecture Decisions
 
@@ -254,7 +254,7 @@ export function runPlanOnce(root, target, ts = tsNow(), cocoOptions = {}) {
     cronLog(root, '[plan] FAIL: .loop/plan.md 未生成或为空');
     return { rc: 1, planPath };
   }
-  cronLog(root, `[plan] 方案见 .loop/plan.md，确认后可跑: loop-system run fix "${target}"`);
+  cronLog(root, `[plan] 方案见 .loop/plan.md，确认后可在 coco 中运行: /loop fix ${target}`);
   return { rc: 0, planPath };
 }
 
@@ -269,7 +269,7 @@ export function runRoadmapOnce(root, target, ts = tsNow(), cocoOptions = {}) {
   }
   const check = checkRoadmapArtifact(root, 'roadmap');
   if (!check.ok) return { rc: 1, roadmapPath };
-  cronLog(root, '[roadmap] 项目级路线图见 .loop/roadmap.md；人审后选择 milestone 运行 loop-system run plan/fix');
+  cronLog(root, '[roadmap] 项目级路线图见 .loop/roadmap.md；人审后选择 milestone 运行 /loop plan 或 /loop fix');
   return { rc: 0, roadmapPath };
 }
 

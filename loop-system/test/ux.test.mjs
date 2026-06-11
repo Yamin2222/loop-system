@@ -43,7 +43,9 @@ test('no args prints friendly entry help with rc 0', () => {
   const result = runCli(cwd, []);
 
   assert.equal(result.status, 0);
-  assert.match(result.stdout, /常用|loop-system "修复|status/);
+  assert.match(result.stdout, /coco 内使用|\/loop 修复|\/loop status/);
+  assert.doesNotMatch(result.stdout, /loop-system run fix/);
+  assert.doesNotMatch(result.stdout, /loop-system run roadmap/);
 });
 
 test('status works without loop artifacts', () => {
@@ -51,7 +53,8 @@ test('status works without loop artifacts', () => {
   const result = runCli(cwd, ['status']);
 
   assert.equal(result.status, 0);
-  assert.match(result.stdout, /暂无|下一步|run|init/);
+  assert.match(result.stdout, /暂无|下一步|\/loop/);
+  assert.doesNotMatch(result.stdout, /loop-system "修复/);
 });
 
 test('status shows current task stage artifacts and recent logs', () => {
@@ -108,7 +111,7 @@ test('top-level natural language routes fix with explanation', () => {
   assert.equal(result.status, 0);
   assert.match(output, /Loop 判断/);
   assert.match(output, /fix/);
-  assert.match(output, /将执行/);
+  assert.match(output, /将执行: \/loop fix/);
 });
 
 test('top-level natural language routes roadmap and council roadmap', () => {
@@ -144,8 +147,24 @@ test('low confidence natural language does not execute and suggests next command
   const output = result.stdout + result.stderr;
 
   assert.equal(result.status, 2);
-  assert.match(output, /建议|run plan|run fix|run roadmap|status/);
+  assert.match(output, /建议|\/loop plan|\/loop fix|\/loop roadmap|\/loop status/);
   assert.equal(existsSync(marker), false);
+});
+
+test('root README presents /loop as daily UX without loop-system run examples', () => {
+  const readme = readFileSync(resolve('..', 'README.md'), 'utf8');
+
+  assert.match(readme, /日常交互入口是在 coco 里输入 `\/loop \.\.\.`/);
+  assert.match(readme, /\/loop fix 修复 login 空指针/);
+  assert.doesNotMatch(readme, /loop-system run (fix|plan|roadmap|triage|execute|verify-fix)/);
+});
+
+test('package README presents /loop as daily UX without loop-system run examples', () => {
+  const readme = readFileSync(resolve('README.md'), 'utf8');
+
+  assert.match(readme, /初始化后在 coco 里用 `\/loop`/);
+  assert.match(readme, /\/loop fix 修复 login 空指针/);
+  assert.doesNotMatch(readme, /loop-system run (fix|plan|roadmap|triage|execute|verify-fix)/);
 });
 
 test('init installs coco /loop command for in-cli usage', () => {

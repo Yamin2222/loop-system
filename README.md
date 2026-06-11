@@ -48,7 +48,7 @@ npx @yaminzhou02/loop-system init .
 .trae/worktrees/
 ```
 
-> `loop-system ...` CLI 仍保留给 CI、cron、发布前检查和调试使用；例如 `loop-system check`、`loop-system sync --check`、`loop-system run triage`。
+> `loop-system ...` CLI 仍保留给 CI、cron、发布前检查和调试使用；例如 `loop-system check`、`loop-system sync --check`。日常修复、规划和 triage 都优先在 coco 内用 `/loop ...`。
 
 ---
 
@@ -137,17 +137,18 @@ npx @yaminzhou02/loop-system init .
 
 ### 3.6 排队/超时自动重试（opt-in）
 
-CLI 模式可在模型排队时让命令等了再试（默认不重试，显式开启，适合 cron/CI）：
+维护 CLI 内部支持 opt-in 重试；日常使用不需要记这组参数，优先在 coco 内执行 `/loop ...`：
 
 ```bash
-loop-system run roadmap --council "项目" --retries 3 --retry-interval 60
+# 调试/CI 专用：给底层 runner 开启排队/限流/超时重试
+loop-system --help
 ```
 只对排队/限流/超时/网络瞬断等**白名单信号**重试；真失败（如 prompt 错）立即失败，不浪费配额。
 
 ### 3.7 挂 cron
 
 ```bash
-0 8 * * 1-5  cd /path/to/项目 && loop-system run triage >> .loop/cron.log 2>&1
+0 8 * * 1-5  cd /path/to/项目 && loop-system check >> .loop/cron.log 2>&1
 ```
 
 ### 3.8 Claude Code / Codex
@@ -180,8 +181,8 @@ council 模式额外用三个规划角色：`roadmap-drafter`（openrouter-3o）
 
 | 阶段 | 行为 | 命令 |
 |------|------|------|
-| **L1 汇报** | 只读 triage，写 STATE.md，不改代码 | `run triage` |
-| **L2 策划+执行** | planner→executor→verifier，APPROVE 才提 PR，不自动合并 | `run plan` / `run fix` / `watch ...` |
+| **L1 汇报** | 只读 triage，写 STATE.md，不改代码 | `/loop status` 或 `/loop triage` |
+| **L2 策划+执行** | planner→executor→verifier，APPROVE 才提 PR，不自动合并 | `/loop plan ...` / `/loop fix ...` / `/loop watch ...` |
 | **L3 无人值守** | allowlist 内自动跑完并提交 | （信任后再开） |
 
 **建议先跑 L1 一到两周**，triage 质量稳定后再开 L2，长期信任后才考虑 L3。
@@ -229,18 +230,18 @@ loop-system sync --check                  # 3. 确认无漂移
 
 ```
 入口/常用:
-  loop-system "<目标>"                自然语言入口（可解释路由）
-  loop-system status                  当前进度/产物/裁决/最近日志
-  loop-system run fix "<目标>"        L2 全流程
-  loop-system run roadmap [--council] "<项目>"  项目级拆分
+  /loop <目标>                         coco 内自然语言入口（可解释路由）
+  /loop status                         当前进度/产物/裁决/最近日志
+  /loop fix <目标>                     L2 全流程
+  /loop roadmap <项目>                 项目级拆分
+  /loop council <项目>                 多模型项目级拆分
 
 底层/高级:
-  run triage | plan | execute | verify-fix     单步执行
-  watch plan | execute | verify                多终端自动接力
-  run ... --retries N --retry-interval 秒      排队/超时重试
+  /loop triage | plan | execute | verify-fix   单步执行
+  /loop watch plan | execute | verify          多终端自动接力
 
 维护:
-  init | sync [--check] | verify | check [--state N]
+  loop-system init | sync [--check] | verify | check [--state N]
 ```
 
 ---

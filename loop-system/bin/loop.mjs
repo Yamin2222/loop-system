@@ -10,32 +10,22 @@ import { routeNaturalInput, renderRouteDecision } from '../lib/route.mjs';
 
 const HELP = `loop-system — 三角色 loop engineering 系统（coco / Claude Code / Codex）
 
-常用:
-  loop-system "修复 login 空指针"     自动判断并执行
-  loop-system "从 0 构建待办 Web 应用" 自动生成项目 roadmap
-  loop-system status                 查看当前进度、产物、最近日志
-  loop-system run fix "<目标>"        L2-全流程：planner→executor→verifier（需有效 HEAD）
-  loop-system run roadmap --council "<项目>" 多模型 council 路线图（成本显著更高）
+coco 内常用:
+  /loop status                       查看当前进度、产物、最近日志
+  /loop 修复 login 空指针             自动选择 plan/fix 并编排三角色
+  /loop 从 0 构建待办 Web 应用         自动生成项目 roadmap
+  /loop plan <目标>                  只策划，产出 .loop/plan.md
+  /loop fix <目标>                   planner→executor→verifier
+  /loop council <项目>               多模型 council 路线图（成本显著更高）
 
-高级:
-  loop-system run triage             L1：只汇报，更新 STATE.md（+门禁）
-  loop-system run roadmap "<项目>"  项目级拆分：产出 .loop/roadmap.md
-  loop-system run plan "<目标>"      L2-策划：委派 loop-planner 出 .loop/plan.md
-  loop-system run execute "<目标>"   L2-执行：严格照 .loop/plan.md 执行
-  loop-system run verify-fix "<目标>" L2-校验：独立 verifier 写 verifier-report.md
-  loop-system watch plan "<目标>" --once  多终端接力：生成 plan.ready
-  loop-system watch execute          多终端接力：等待 plan.ready 后执行
-  loop-system watch verify           多终端接力：等待 execute.ready 后校验
+一次性安装:
+  npx @yaminzhou02/loop-system init  在项目中生成 .agents 与 .trae/commands/loop.md
 
 维护:
   loop-system init [目标目录]        脚手架：拷贝 .agents/LOOP.md/STATE.md 并生成三套工具配置
   loop-system sync [--check]         同步多工具生成物；--check 只查漂移不写
   loop-system verify [新鲜度分钟]     STATE.md 门禁（默认 60 分钟窗口）
   loop-system check [--state [N]]    聚合门禁：模块健康 + 漂移[ + --state STATE 新鲜度]
-
-run 可选参数:
-  --retries N                        coco 排队/限流/超时时最多重试 N 次（默认 0）
-  --retry-interval 秒                每次重试间隔秒数（默认 30）
 
 退出码: 0 通过 | 1 失败/需修 | 2 需人工/环境阻塞
 `;

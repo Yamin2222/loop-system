@@ -2,17 +2,17 @@ const KNOWN = new Set(['init', 'run', 'watch', 'sync', 'check', 'verify', 'statu
 
 export function routeNaturalInput(words) {
   const target = words.join(' ').trim();
-  if (!target) return { ok: false, rc: 2, message: '请描述目标，例如：loop-system "修复 login 空指针"' };
+  if (!target) return { ok: false, rc: 2, message: '请在 coco 中描述目标，例如：/loop 修复 login 空指针' };
   if (KNOWN.has(words[0])) return { ok: false, rc: 2, message: `内部错误：已知命令 ${words[0]} 不应进入自然语言路由` };
   if (/^[A-Za-z][A-Za-z0-9_-]*$/.test(target)) {
-    return { ok: false, rc: 2, message: `未知命令: ${target}。是否想用 run/watch/status？若这是目标，请用引号写成一句自然语言。` };
+    return { ok: false, rc: 2, message: `未知命令: ${target}。日常请在 coco 中使用 /loop status、/loop plan、/loop fix、/loop roadmap 或 /loop watch。若这是目标，请写成一句自然语言。` };
   }
 
   const matches = collectMatches(target);
   const order = ['status', 'council', 'roadmap', 'plan', 'fix'];
   const selected = order.find((k) => matches[k].length > 0);
   if (!selected) {
-    return { ok: false, rc: 2, message: `无法确定要做什么。建议：loop-system status；loop-system run plan "${target}"；loop-system run fix "${target}"；loop-system run roadmap "${target}"` };
+    return { ok: false, rc: 2, message: `无法确定要做什么。建议：/loop status；/loop plan ${target}；/loop fix ${target}；/loop roadmap ${target}` };
   }
 
   const args = selected === 'status'
@@ -30,8 +30,8 @@ export function renderRouteDecision(decision) {
     .map(([k, v]) => `${k}: ${v.join('/')}`)
     .join('; ');
   const command = decision.mode === 'status'
-    ? 'loop-system status'
-    : `loop-system run ${decision.args.map(quoteArg).join(' ')}`;
+    ? '/loop status'
+    : `/loop ${decision.council ? `council ${decision.target}` : `${decision.mode} ${decision.target}`}`;
   return `== Loop 判断 ==\n目标: ${decision.target}\n判断: ${decision.council ? 'roadmap --council' : decision.mode}\n命中: ${all}\n因为: 按优先级 status > council > roadmap > plan > fix，选择 ${decision.selected}\n将执行: ${command}`;
 }
 
@@ -51,8 +51,4 @@ function find(text, patterns) {
 
 function has(text, patterns) {
   return patterns.some((p) => p.test(text));
-}
-
-function quoteArg(s) {
-  return /\s|["']|[\u4e00-\u9fff]/.test(s) ? `"${String(s).replace(/"/g, '\\"')}"` : s;
 }

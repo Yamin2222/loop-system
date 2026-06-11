@@ -81,8 +81,8 @@ loop-system check --state 240
 # 只校验 STATE.md
 loop-system verify 60
 
-# coco 排队/限流/超时时 opt-in 重试（默认不重试）
-loop-system run roadmap --council "从 0 构建一个待办事项 Web 应用" --retries 3 --retry-interval 60
+# 底层 runner 的排队/限流/超时重试请看帮助；日常仍使用 /loop
+loop-system --help
 ```
 
 coco `/loop` 入口不要求用户记 npm/npx 命令；它读取 `LOOP.md` / `STATE.md`，按规则选择 status、roadmap、plan、fix 或 watch，并委派已生成的 skill/agent。
@@ -95,7 +95,7 @@ coco `/loop` 入口不要求用户记 npm/npx 命令；它读取 `LOOP.md` / `ST
 
 `status` 纯读 `.loop/`，汇总当前 `taskId`、watch stage 接力、关键 artifact、verifier verdict 首行和最近 cron 日志。它不做语义判断；verdict 永远以 `.loop/verifier-report.md` 首行为准。
 
-CLI `run plan/roadmap/execute/verify-fix/fix` 结束时会打印 `== Loop 结果 ==` 卡片，聚合目标、模式、退出码含义、关键产物和下一步建议。summary 只读已有 artifact，不新增模型调用，不替代 verifier 裁决。
+底层 runner 结束时会打印 `== Loop 结果 ==` 卡片，聚合目标、模式、退出码含义、关键产物和下一步建议。summary 只读已有 artifact，不新增模型调用，不替代 verifier 裁决。
 
 ## 项目级 Roadmap
 
@@ -128,11 +128,10 @@ CLI `run plan/roadmap/execute/verify-fix/fix` 结束时会打印 `== Loop 结果
 
 ## coco 调用重试
 
-`run` 命令支持在 coco 排队、限流、超时或临时服务错误时显式重试：
+维护 CLI 内部支持在 coco 排队、限流、超时或临时服务错误时显式重试；这是 CI/调试能力，日常使用仍走 `/loop ...`：
 
 ```bash
-loop-system run plan "修复某个明确问题" --retries 3 --retry-interval 60
-loop-system run roadmap --council "从 0 构建一个待办事项 Web 应用" --retries 3 --retry-interval 60
+loop-system --help
 ```
 
 默认 `--retries 0`，即不重试，保持原有行为。开启后仅对白名单信号（如 queue/timeout/rate limit/429/503/网络瞬断等）重试；普通 prompt 失败或产物缺失不会盲目重试。重试不会放松 `.loop/plan.md`、`.loop/roadmap.md`、`.loop/council.md`、`.loop/verifier-report.md` 等 artifact gate，只影响 coco 调用本身。
@@ -168,7 +167,7 @@ watch 通过 `.loop/stage/*.json` 传递 `taskId`，下游只处理与 `current.
 
 - `fix` 要求目标项目已有有效 `HEAD`，因为 executor / verifier 依赖 worktree 隔离。
 - verifier 裁决唯一可信来源是本轮落盘的 `.loop/verifier-report.md` 首行。
-- `run --retries` 默认关闭；开启后只对白名单排队/超时/限流/临时服务错误重试，不替代 artifact 校验。
+- 底层重试默认关闭；开启后只对白名单排队/超时/限流/临时服务错误重试，不替代 artifact 校验。
 - `.loop/` 与 `.trae/worktrees/` 是运行产物，应加入目标项目 `.gitignore`。
 - watch 的 execute / verify 会使用 `.loop/stage/<role>.lock` 防重复启动；残留 lock 需要人工确认后删除。
 
