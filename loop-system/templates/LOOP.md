@@ -35,6 +35,23 @@ triage（loop-triage，汇报）
 更新 STATE.md（含 Activity Log）→ 门禁 verify-loop.sh
 ```
 
+### 多终端自动接力（watch MVP）
+
+需要把 plan / execute / verify 拆到多个终端时，可使用 watch 模式。它通过 `.loop/stage/*.json` 写入 `taskId`，下游只处理与 `current.json` 匹配的本轮任务，避免旧产物串台：
+
+```bash
+# 终端 A：源头任务，MVP 阶段 plan 必须 --once
+loop-system watch plan "修复某个明确问题" --once
+
+# 终端 B：等待 plan.ready 后自动执行
+loop-system watch execute --once
+
+# 终端 C：等待 execute.ready 后自动校验
+loop-system watch verify --once
+```
+
+`verify.done.json` 只是接力通知；最终裁决仍以 `.loop/verifier-report.md` 首行为唯一可信来源。
+
 ## 其余原语
 
 | 原语 | 作用 | 实现 |
@@ -114,6 +131,11 @@ loop-system check --state 240
 
 # 只检查多工具 skill / agent 生成物是否漂移
 loop-system sync --check
+
+# 多终端自动接力（各开一个终端）
+loop-system watch plan "修复某个明确问题" --once
+loop-system watch execute --once
+loop-system watch verify --once
 
 # 挂 cron：每个工作日 08:00 跑 triage
 # 0 8 * * 1-5  cd /path/to/repo && loop-system run triage >> .loop/cron.log 2>&1

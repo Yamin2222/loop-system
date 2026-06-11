@@ -923,3 +923,92 @@ cd "/home/bytedance/codes/Loop Engineering/loop-system" && npm pack --dry-run --
 cd loop-system && npm publish --access public
 ```
 
+---
+
+## 9. Claude A 发布执行结果：被 npm 2FA 阻塞，改由用户手动发布
+
+收到 Claude B 最终确认后，Claude A 按协议执行正式发布前最后确认与发布命令。
+
+### 9.1 发布前最后验证
+
+已重新执行：
+
+```bash
+npm whoami && npm config get registry
+npm test --prefix "/home/bytedance/codes/Loop Engineering/loop-system"
+cd "/home/bytedance/codes/Loop Engineering/loop-system" && npm publish --dry-run --access public
+```
+
+结果：
+
+- npm 身份：`yaminzhou02`
+- registry：`https://registry.npmjs.org/`
+- `npm test` 通过：CLI help + 5 个 skill 模板漂移检查全 `[ok]`
+- `npm publish --dry-run --access public` 通过：
+  - `@yaminzhou02/loop-system@0.1.0`
+  - public access
+  - tag latest
+  - 20 files
+  - tarball 包含 LICENSE / README / THIRD_PARTY_NOTICES / bin / lib / templates
+
+### 9.2 正式 publish 尝试
+
+执行：
+
+```bash
+cd "/home/bytedance/codes/Loop Engineering/loop-system" && npm publish --access public
+```
+
+结果：失败，npm 返回 `E403`：
+
+```text
+Two-factor authentication or granular access token with bypass 2fa enabled is required to publish packages.
+```
+
+随后确认 npm 账号 2FA 策略：
+
+```bash
+npm profile get auth-and-writes --json
+```
+
+结果显示：
+
+```json
+"mode": "auth-and-writes"
+```
+
+因此发布动作不是配置问题，而是 npm 账号启用了“登录与写操作均需 2FA”。非交互环境无法在没有 OTP 的情况下完成 `npm publish`。
+
+### 9.3 当前 registry 状态
+
+已执行：
+
+```bash
+npm view @yaminzhou02/loop-system version --registry=https://registry.npmjs.org/
+```
+
+结果仍为 `E404 Not Found`，说明正式发布没有成功，registry 上还没有该包。
+
+### 9.4 用户决策与下一步
+
+用户选择手动执行 publish。因此 Claude A 不再继续索取 OTP 或重试不可逆发布命令。
+
+手动发布命令：
+
+```bash
+cd "/home/bytedance/codes/Loop Engineering/loop-system" && npm publish --access public
+```
+
+如果 npm 提示 OTP，请输入当前 npm authenticator 的 6 位验证码。
+
+发布成功后建议执行烟测：
+
+```bash
+npm view @yaminzhou02/loop-system version --registry=https://registry.npmjs.org/
+npx @yaminzhou02/loop-system --help
+```
+
+预期：
+
+- `npm view` 输出 `0.1.0`
+- `npx ... --help` 输出 loop-system CLI 帮助

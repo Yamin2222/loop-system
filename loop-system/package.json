@@ -1,6 +1,6 @@
 {
   "name": "@yaminzhou02/loop-system",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "轻量三角色 loop engineering 系统脚手架与 CLI（coco / Claude Code / Codex）",
   "type": "module",
   "author": "yaminzhou02",
@@ -39,7 +39,7 @@
     "codex"
   ],
   "scripts": {
-    "test": "node bin/loop.mjs --help && node lib/check-templates.mjs"
+    "test": "node bin/loop.mjs --help && node lib/check-templates.mjs && node --test test/*.test.mjs"
   },
   "license": "MIT"
 }
