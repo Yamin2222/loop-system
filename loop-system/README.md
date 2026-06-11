@@ -1,4 +1,4 @@
-# @loop/loop-system
+# @yaminzhou02/loop-system
 
 轻量三角色 loop engineering 系统脚手架与 CLI，支持 coco（TraeCLI）/ Claude Code / Codex。
 
@@ -13,13 +13,13 @@
 
 ```bash
 # 在目标项目根目录初始化
-npx @loop/loop-system init
+npx @yaminzhou02/loop-system init
 
 # 检查生成物是否健康（适合 CI）
-npx @loop/loop-system check
+npx @yaminzhou02/loop-system check
 
 # L1：只汇报，更新 STATE.md
-npx @loop/loop-system run triage
+npx @yaminzhou02/loop-system run triage
 ```
 
 ## 常用命令

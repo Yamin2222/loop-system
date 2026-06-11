@@ -1,13 +1,25 @@
 {
-  "name": "@loop/loop-system",
+  "name": "@yaminzhou02/loop-system",
   "version": "0.1.0",
   "description": "轻量三角色 loop engineering 系统脚手架与 CLI（coco / Claude Code / Codex）",
   "type": "module",
+  "author": "yaminzhou02",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Yamin2222/loop-system.git"
+  },
+  "homepage": "https://github.com/Yamin2222/loop-system#readme",
+  "bugs": {
+    "url": "https://github.com/Yamin2222/loop-system/issues"
+  },
   "bin": {
     "loop-system": "bin/loop.mjs"
   },
   "engines": {
     "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "files": [
     "bin",
