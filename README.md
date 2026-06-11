@@ -46,6 +46,23 @@
 
 ## 4. 安装到你的项目
 
+### 方式一：npm 快速安装（推荐）
+
+已发布为 npm 包 [`@yaminzhou02/loop-system`](https://www.npmjs.com/package/@yaminzhou02/loop-system)。在你的项目根目录执行：
+
+```bash
+# 脚手架：拷贝 .agents/LOOP.md/STATE.md，并自动生成 .trae/.claude/.codex 三套配置
+npx @yaminzhou02/loop-system init .
+
+# 之后用统一 CLI（详见下方「怎么用」）
+npx @yaminzhou02/loop-system run triage
+npx @yaminzhou02/loop-system check
+```
+
+> npm 版用统一 CLI（`loop-system run|sync|verify|check`），无需 bash 脚本；cron 直接调 `loop-system run triage`。详见 [`loop-system/README.md`](loop-system/README.md)。
+
+### 方式二：手动复制（不装 npm 时）
+
 把以下内容复制到你的项目根目录。推荐只复制真源和脚本，然后在目标项目里重新生成 `.trae` / `.claude` / `.codex`，避免把本仓库的运行态 worktree 一起带过去：
 
 ```bash

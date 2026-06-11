@@ -769,3 +769,157 @@ cd "/home/bytedance/codes/Loop Engineering/loop-system" && npm pack --dry-run --
 
 本轮（基础合规）双方意见一致，可提交收尾。
 
+
+---
+
+## 8. Claude B 新议题：正式发布前最终把关（不可逆操作）
+
+用户已注册 npm 账号并登录，决定正式发布到公共 npmjs。我已完成发布前配置改动，现提请最终把关——**`npm publish` 是不可逆操作**（同版本号发出后不可覆盖，24h 后基本无法 unpublish），双 agent 确认后再执行。
+
+### 8.1 已完成的发布前配置（已提交 42b15af）
+
+- 包名：`@loop/loop-system` → **`@yaminzhou02/loop-system`**（实测 npm 上未被占用，可发布）
+- `author`: `yaminzhou02`
+- `repository` / `homepage` / `bugs`: 指向 `github.com/Yamin2222/loop-system`
+- `publishConfig.access`: `public`（scoped 公开包必需）
+- LICENSE 署名占位 → `Copyright (c) 2026 yaminzhou02`
+- README 内所有 `@loop/loop-system` → `@yaminzhou02/loop-system`
+
+### 8.2 已通过的验证
+
+- `npm whoami` = yaminzhou02；registry = https://registry.npmjs.org/
+- package.json JSON 合法
+- `npm test` rc=0（help + 5 个 skill 模板漂移检查全 [ok]）
+- `npm publish --dry-run`：
+  - name=@yaminzhou02/loop-system version=0.1.0
+  - public access，tag latest
+  - 20 files，package 18.2kB / unpacked 46.7kB
+  - 含 LICENSE / README / THIRD_PARTY_NOTICES / lib/check-templates.mjs
+  - **不含** reference/ .loop/ .trae/worktrees/
+
+### 8.3 给 Claude A 的最终确认问题
+
+1. 8.1/8.2 是否还有遗漏的发布 blocker？（例如 README 第三方声明、Node18 兼容是否需在发布前再确认）
+2. 版本号 `0.1.0` 作为首发是否合适，还是建议 `0.0.1`？
+3. 是否同意执行 `npm publish --access public`？若同意请明确「同意发布」。
+4. 发布后建议的收尾动作（如 git tag v0.1.0、推送到 github.com/Yamin2222/loop-system）？
+
+#### Claude A 回复区（发布前最终把关）
+
+我复核了第 8 节发布前配置、当前 `loop-system/package.json` / README / LICENSE / THIRD_PARTY_NOTICES，并重新跑了发布前验证。结论：**没有发现新的发布 blocker；同意发布 `@yaminzhou02/loop-system@0.1.0` 到公共 npm。**
+
+### A. 对 8.1 发布前配置的复核
+
+已核对当前文件：
+
+- `package.json`：
+  - `name` = `@yaminzhou02/loop-system`
+  - `version` = `0.1.0`
+  - `author` = `yaminzhou02`
+  - `repository` / `homepage` / `bugs` 均指向 `github.com/Yamin2222/loop-system`
+  - `publishConfig.access` = `public`
+  - `license` = `MIT`
+  - `files` 显式包含 `README.md` / `LICENSE` / `THIRD_PARTY_NOTICES.md`
+- `README.md`：标题和 `npx` 示例均已改为 `@yaminzhou02/loop-system`。
+- `LICENSE`：版权主体为 `Copyright (c) 2026 yaminzhou02`。
+- `THIRD_PARTY_NOTICES.md`：仍保留两个 reference 项目的版权行与完整 MIT 文本。
+
+额外 grep：`loop-system/` 下已无 `@loop/loop-system` 残留。
+
+### B. 我重新执行的验证
+
+```bash
+npm whoami && npm config get registry
+npm test --prefix "/home/bytedance/codes/Loop Engineering/loop-system"
+node -e "JSON.parse(require('fs').readFileSync('/home/bytedance/codes/Loop Engineering/loop-system/package.json','utf8')); console.log('package.json ok')"
+node --version
+cd "/home/bytedance/codes/Loop Engineering/loop-system" && npm publish --dry-run --access public
+cd "/home/bytedance/codes/Loop Engineering/loop-system" && npm pack --dry-run --json
+```
+
+结果：
+
+- npm 身份：`yaminzhou02`
+- registry：`https://registry.npmjs.org/`
+- package.json JSON 合法：输出 `package.json ok`
+- `npm test` rc=0：CLI help 正常，5 个 skill 模板漂移检查全 `[ok]`
+- 当前 Node runtime：`v20.20.2`
+- `npm publish --dry-run --access public` rc=0：
+  - 将发布 `@yaminzhou02/loop-system@0.1.0`
+  - tag `latest`
+  - public access
+  - 20 files
+  - package size 18.2 kB / unpacked size 46.7 kB
+- `npm pack --dry-run --json` 确认 tarball 文件列表只包含预期 20 个文件：
+  - `LICENSE`
+  - `README.md`
+  - `THIRD_PARTY_NOTICES.md`
+  - `bin/loop.mjs`
+  - `lib/*.mjs`
+  - `templates/**`
+  - `package.json`
+  - 不包含 `reference/`、`.loop/`、`.trae/worktrees/`
+
+### C. 回答 8.3 的 4 个问题
+
+1. **是否还有遗漏发布 blocker？**
+   
+   未发现新的 blocker。README 第三方声明、第三方 MIT notice、LICENSE、包名、publishConfig、tarball 内容、npm 身份、dry-run 均已确认。唯一残留是“未在 Node 18 runtime 实跑”，但当前 `engines` 是 `>=18`，源码未发现 >18 API，且本轮已在 Node 20 通过 `npm test` / publish dry-run。这个我认为是发布后仍应补的兼容性验证项，不构成本次 0.1.0 首发 blocker。
+
+2. **版本号 `0.1.0` 是否合适？**
+   
+   合适。这个包已经具备可用 CLI、init/run/sync/verify/check、模板和基础合规，语义上比 `0.0.1` 更像“早期可用版本”而不是空壳占位。首发用 `0.1.0` 合理。
+
+3. **是否同意执行 `npm publish --access public`？**
+   
+   **同意发布。** 建议发布命令固定为：
+
+   ```bash
+   cd "/home/bytedance/codes/Loop Engineering/loop-system" && npm publish --access public
+   ```
+
+   注意：这是不可逆操作；发布后同版本不可覆盖。如果 Claude B 也给出最终同意，再执行正式 publish。
+
+4. **发布后收尾动作建议**
+   
+   发布成功后建议按顺序做：
+
+   1. 记录 npm 发布结果：包名、版本、npm URL。
+   2. 运行一次安装烟测，例如在临时目录执行：
+      ```bash
+      npx @yaminzhou02/loop-system --help
+      ```
+      或至少 `npm view @yaminzhou02/loop-system version` 确认 registry 可见。
+   3. 打 git tag：`v0.1.0`。
+   4. 推送 commit 和 tag 到 `github.com/Yamin2222/loop-system`。
+   5. 在 README / release notes 中记录首发版本和剩余 TODO（Node 18 runtime 实测、后续 CHANGELOG）。
+
+### D. 最终把关结论
+
+**同意发布 `@yaminzhou02/loop-system@0.1.0`。**
+
+#### Claude B 回复区（发布前最终确认）
+
+我做了发布前最后一次独立确认（非仅看 Claude A 记录）：
+
+| 项 | 结果 |
+|----|------|
+| 包名 `@yaminzhou02/loop-system` 仍未占用 | ✅ E404，可发布 |
+| npm 身份 | yaminzhou02 ✅ |
+| dry-run | name/version=0.1.0、public、tag latest、20 files ✅ |
+| tarball 无 reference/.loop/worktrees/.env | ✅ 干净 |
+
+对 Claude A 回答的认同：
+1. 无新 blocker —— 同意。Node18 实测列为发布后 TODO，不阻塞（代码已核对无 >18 API）。
+2. 版本 `0.1.0` —— 同意，符合"早期可用版本"语义。
+3. 收尾动作（烟测、git tag v0.1.0、推 github、记录 TODO）—— 全部认同，按此执行。
+
+### 最终结论
+
+**同意执行 `npm publish --access public`。** 双 agent 把关一致通过，无遗留 blocker。这是不可逆操作，发布后同版本不可覆盖；后续迭代走 0.1.1 / 0.2.0。
+
+发布命令：
+```bash
+cd loop-system && npm publish --access public
+```
+
