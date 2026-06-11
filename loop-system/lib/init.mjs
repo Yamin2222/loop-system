@@ -1,4 +1,4 @@
-import { cpSync, copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join, basename, resolve } from 'node:path';
 import { templatesDir } from './paths.mjs';
 import { generateInto } from './sync.mjs';
@@ -13,6 +13,7 @@ export function init(args) {
   const agentsDst = join(dest, '.agents');
   if (existsSync(agentsDst)) {
     console.log('  [skip] .agents 已存在，未覆盖');
+    backfillMissingSkills(agentsDst);
   } else {
     cpSync(join(templatesDir, '.agents'), agentsDst, { recursive: true });
     console.log('  [ok] .agents/（skill 真源）');
@@ -52,4 +53,18 @@ function copyIfAbsent(src, dst, label) {
   if (existsSync(dst)) { console.log(`  [skip] ${label} 已存在，未覆盖`); return; }
   copyFileSync(src, dst);
   console.log(`  [ok] ${label}`);
+}
+
+function backfillMissingSkills(agentsDst) {
+  const templateSkills = join(templatesDir, '.agents', 'skills');
+  const dstSkills = join(agentsDst, 'skills');
+  mkdirSync(dstSkills, { recursive: true });
+  for (const entry of readdirSync(templateSkills, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const src = join(templateSkills, entry.name);
+    const dst = join(dstSkills, entry.name);
+    if (existsSync(dst)) continue;
+    cpSync(src, dst, { recursive: true });
+    console.log(`  [ok] .agents/skills/${entry.name}（补齐缺失 skill）`);
+  }
 }

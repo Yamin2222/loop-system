@@ -181,3 +181,21 @@ test('init installs coco /loop command for in-cli usage', () => {
   assert.match(command, /@loop-verifier/);
   assert.doesNotMatch(command, /npx @yaminzhou02\/loop-system/);
 });
+
+test('init backfills missing skills when .agents already exists from an older install', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'loop-ux-init-backfill-'));
+  const oldSkillDir = join(cwd, '.agents', 'skills', 'loop-triage');
+  mkdirSync(oldSkillDir, { recursive: true });
+  writeFileSync(join(oldSkillDir, 'SKILL.md'), '---\ndescription: old triage\n---\n\nold triage body\n');
+  writeFileSync(join(cwd, 'LOOP.md'), '# existing LOOP\n');
+  writeFileSync(join(cwd, 'STATE.md'), '# existing STATE\n');
+
+  const result = runCli(cwd, ['init', cwd]);
+  const output = result.stdout + result.stderr;
+
+  assert.equal(result.status, 0, output);
+  assert.equal(existsSync(join(cwd, '.agents', 'skills', 'roadmap-draft', 'SKILL.md')), true);
+  assert.equal(existsSync(join(cwd, '.trae', 'skills', 'roadmap-draft', 'SKILL.md')), true);
+  assert.equal(existsSync(join(cwd, '.trae', 'agents', 'roadmap-drafter.md')), true);
+  assert.match(readFileSync(join(cwd, '.agents', 'skills', 'loop-triage', 'SKILL.md'), 'utf8'), /old triage body/);
+});
