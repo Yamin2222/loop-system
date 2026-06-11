@@ -11,6 +11,8 @@ const HELP = `loop-system — 三角色 loop engineering 系统（coco / Claude 
 用法:
   loop-system init [目标目录]        脚手架：拷贝 .agents/LOOP.md/STATE.md 并生成三套工具配置
   loop-system run triage             L1：只汇报，更新 STATE.md（+门禁）
+  loop-system run roadmap "<项目>"  项目级拆分：产出 .loop/roadmap.md
+  loop-system run roadmap --council "<项目>" 多模型 council 路线图（成本显著更高）
   loop-system run plan "<目标>"      L2-策划：委派 loop-planner 出 .loop/plan.md
   loop-system run execute "<目标>"   L2-执行：严格照 .loop/plan.md 执行
   loop-system run verify-fix "<目标>" L2-校验：独立 verifier 写 verifier-report.md
@@ -21,6 +23,10 @@ const HELP = `loop-system — 三角色 loop engineering 系统（coco / Claude 
   loop-system sync [--check]         同步多工具生成物；--check 只查漂移不写
   loop-system verify [新鲜度分钟]     STATE.md 门禁（默认 60 分钟窗口）
   loop-system check [--state [N]]    聚合门禁：模块健康 + 漂移[ + --state STATE 新鲜度]
+
+run 可选参数:
+  --retries N                        coco 排队/限流/超时时最多重试 N 次（默认 0）
+  --retry-interval 秒                每次重试间隔秒数（默认 30）
 
 退出码: 0 通过 | 1 失败/需修 | 2 需人工/环境阻塞
 `;

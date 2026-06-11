@@ -5,7 +5,7 @@
 核心能力：
 
 - `init`：把 loop skill 真源、状态模板和多工具 agent 配置安装到目标项目。
-- `run`：驱动 L1 triage / L2 plan / L2 fix 三阶段流程。
+- `run`：驱动 L1 triage、项目级 roadmap、L2 plan / fix 流程。
 - `watch`：支持多终端自动接力，按 plan → execute → verify 三角色串行推进。
 - `sync`：从 `.agents/skills/` 生成 `.trae/.claude/.codex` 配置，并支持漂移检查。
 - `verify` / `check`：提供 STATE 运行态门禁和时间无关的代码健康门禁。
@@ -26,6 +26,12 @@ npx @yaminzhou02/loop-system run triage
 ## 常用命令
 
 ```bash
+# 项目级拆分：只生成 .loop/roadmap.md，不执行代码
+loop-system run roadmap "从 0 构建一个待办事项 Web 应用"
+
+# 重要项目可启用 council：drafter → challenger → arbiter，多模型复核，成本显著更高
+loop-system run roadmap --council "从 0 构建一个待办事项 Web 应用"
+
 # L2-策划：只生成 .loop/plan.md
 loop-system run plan "修复某个明确问题"
 
@@ -52,7 +58,52 @@ loop-system check --state 240
 
 # 只校验 STATE.md
 loop-system verify 60
+
+# coco 排队/限流/超时时 opt-in 重试（默认不重试）
+loop-system run roadmap --council "从 0 构建一个待办事项 Web 应用" --retries 3 --retry-interval 60
 ```
+
+## 项目级 Roadmap
+
+当目标是“从 0 构建完整项目”时，先生成项目级路线图：
+
+```bash
+loop-system run roadmap "从 0 构建一个待办事项 Web 应用"
+```
+
+该命令只写 `.loop/roadmap.md`，不会写 `.loop/plan.md`，也不会执行代码。roadmap 中每个 milestone 都应包含 `Goal`、`Acceptance`、`Depends on` 和 `Suggested next command`。人审 roadmap 后，再挑选一个 milestone 进入 L2：
+
+```bash
+loop-system run plan "M1 — 初始化最小可运行骨架"
+loop-system run fix "M1 — 初始化最小可运行骨架"
+```
+
+如果 `.loop/roadmap.md` 中仍有 `Open Questions`，建议先通过人工/对话澄清，不要无人值守执行后续 milestone。
+
+### Council Roadmap
+
+对重要项目可使用 council 模式：
+
+```bash
+loop-system run roadmap --council "从 0 构建一个待办事项 Web 应用"
+```
+
+该模式会要求 `roadmap-drafter → roadmap-challenger → roadmap-arbiter` 顺序协作，写入可审计的 `.loop/council.md`，并最终写 `.loop/roadmap.md`。机器门禁要求：council 记录非空、roadmap 包含 `## Roadmap:` 与 `### Milestones`；若 council verdict 为 `ESCALATE_HUMAN`，命令返回退出码 2。
+
+`--council` 成本显著高于普通 roadmap（最多 2 轮、多角色模型调用），建议仅对重要或高不确定性的项目使用。
+
+## coco 调用重试
+
+`run` 命令支持在 coco 排队、限流、超时或临时服务错误时显式重试：
+
+```bash
+loop-system run plan "修复某个明确问题" --retries 3 --retry-interval 60
+loop-system run roadmap --council "从 0 构建一个待办事项 Web 应用" --retries 3 --retry-interval 60
+```
+
+默认 `--retries 0`，即不重试，保持原有行为。开启后仅对白名单信号（如 queue/timeout/rate limit/429/503/网络瞬断等）重试；普通 prompt 失败或产物缺失不会盲目重试。重试不会放松 `.loop/plan.md`、`.loop/roadmap.md`、`.loop/council.md`、`.loop/verifier-report.md` 等 artifact gate，只影响 coco 调用本身。
+
+重试会增加等待时间和模型调用成本，建议仅在明确遇到排队、限流或临时服务故障时使用。
 
 ## 多终端自动接力（watch MVP）
 
@@ -83,6 +134,7 @@ watch 通过 `.loop/stage/*.json` 传递 `taskId`，下游只处理与 `current.
 
 - `fix` 要求目标项目已有有效 `HEAD`，因为 executor / verifier 依赖 worktree 隔离。
 - verifier 裁决唯一可信来源是本轮落盘的 `.loop/verifier-report.md` 首行。
+- `run --retries` 默认关闭；开启后只对白名单排队/超时/限流/临时服务错误重试，不替代 artifact 校验。
 - `.loop/` 与 `.trae/worktrees/` 是运行产物，应加入目标项目 `.gitignore`。
 - watch 的 execute / verify 会使用 `.loop/stage/<role>.lock` 防重复启动；残留 lock 需要人工确认后删除。
 

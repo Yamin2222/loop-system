@@ -1,0 +1,66 @@
+---
+name: roadmap-arbitrate
+description: Council 模式的 roadmap 仲裁者。综合 Draft 与 Challenge，写最终 .loop/council.md 裁决和 .loop/roadmap.md。
+---
+
+# Roadmap Arbitrate Skill
+
+你是 council 模式里的 **arbiter**。你的职责是综合 drafter 草案与 challenger 反馈，产出最终可执行的项目级 roadmap。
+
+## 输入
+
+- 项目目标描述
+- `.loop/council.md` 中的 Draft 与 Challenge
+- 当前 `STATE.md` / `LOOP.md` 与必要代码上下文
+
+## 流程
+
+1. 读 `.loop/council.md`，确认 Draft 与 Challenge 均存在。
+2. 对 challenger 的 Keep / Modify / Drop / Missing 逐项做 Decision。
+3. 将仲裁记录写入 `.loop/council.md`，首部或结尾必须包含 `## Verdict: APPROVE | ESCALATE_HUMAN`。
+4. 将最终 roadmap 写入 `.loop/roadmap.md`。
+5. 不写 `.loop/plan.md`、`.loop/verifier-report.md`、源码或测试。
+
+## `.loop/council.md` 仲裁格式
+
+```markdown
+## Verdict: APPROVE | ESCALATE_HUMAN
+
+### Synthesis / Decisions
+- Decision: keep | modify | drop | add | escalate
+  - Item: <对应 challenge 项>
+  - Reason: <理由>
+
+### Final Notes
+- <成本、风险、人工门槛>
+```
+
+## `.loop/roadmap.md` 最终格式
+
+最终 roadmap 必须包含以下标题，供机器门禁检查：
+
+```markdown
+## Roadmap: <项目一句话>
+
+### Vision / Done Criteria
+
+### Milestones
+
+#### M1 — <垂直切片目标>
+- Status: TODO
+- Goal: <该里程碑要交付什么>
+- Acceptance:
+  - <可验收条件>
+- Depends on: none
+- Suggested next command: `loop-system run plan "M1 — <垂直切片目标>"`
+
+### Risks / Architecture Decisions
+
+### Open Questions
+```
+
+## Verdict 规则
+
+- 如果 Draft / Challenge 缺失、目标仍关键不清、风险需要人决策，写 `## Verdict: ESCALATE_HUMAN`。
+- 否则写 `## Verdict: APPROVE` 并产出最终 roadmap。
+- 不允许 `APPROVE_WITH_NOTES` 等组合态。

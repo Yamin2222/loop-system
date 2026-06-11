@@ -6,6 +6,8 @@
 ## 状态主轴
 
 - `STATE.md`：loop 跨会话记忆。每次运行必须读它、更新它。
+- `.loop/roadmap.md`：项目级路线图，把“从 0 构建完整项目”拆成可逐个进入 L2 的 milestones。
+- `.loop/plan.md`：单个 milestone / 单个任务的技术实施方案。
 
 ## 三角色分工（核心）
 
@@ -35,6 +37,23 @@ triage（loop-triage，汇报）
 更新 STATE.md（含 Activity Log）→ 门禁 verify-loop.sh
 ```
 
+### 项目级 Roadmap
+
+从 0 构建完整项目时，先生成项目级路线图，而不是直接进入单任务 fix：
+
+```bash
+loop-system run roadmap "从 0 构建一个待办事项 Web 应用"
+```
+
+`roadmap` 只写 `.loop/roadmap.md`，不写 `.loop/plan.md` / `.loop/verifier-report.md`，也不触发 execute/watch。人审 roadmap 后，选择一个 milestone 进入 L2：
+
+```bash
+loop-system run plan "M1 — 初始化最小可运行骨架"
+loop-system run fix "M1 — 初始化最小可运行骨架"
+```
+
+roadmap 中的每个 milestone 应包含 `Goal`、`Acceptance`、`Depends on` 与 `Suggested next command`。如仍有 Open Questions，先人工澄清，不要无人值守执行。
+
 ### 多终端自动接力（watch MVP）
 
 需要把 plan / execute / verify 拆到多个终端时，可使用 watch 模式。它通过 `.loop/stage/*.json` 写入 `taskId`，下游只处理与 `current.json` 匹配的本轮任务，避免旧产物串台：
@@ -52,11 +71,40 @@ loop-system watch verify --once
 
 `verify.done.json` 只是接力通知；最终裁决仍以 `.loop/verifier-report.md` 首行为唯一可信来源。
 
+### 项目级 Roadmap / Council Roadmap
+
+从 0 构建完整项目时，先跑项目级拆分：
+
+```bash
+loop-system run roadmap "从 0 构建一个待办事项 Web 应用"
+```
+
+重要项目可启用 council 模式，让 `roadmap-drafter → roadmap-challenger → roadmap-arbiter` 多模型复核后产出最终 `.loop/roadmap.md`，并保留 `.loop/council.md` 审计记录：
+
+```bash
+loop-system run roadmap --council "从 0 构建一个待办事项 Web 应用"
+```
+
+`--council` 成本显著高于普通 roadmap（最多 2 轮、多角色模型调用），仅建议用于重要或高不确定性项目。若 `.loop/council.md` 含 `## Verdict: ESCALATE_HUMAN`，命令返回退出码 2，需人工先澄清。
+
+### coco 排队/限流/超时重试
+
+`run` 命令可在 coco 排队、限流、超时或临时服务错误时显式重试：
+
+```bash
+loop-system run plan "修复某个明确问题" --retries 3 --retry-interval 60
+loop-system run roadmap --council "从 0 构建一个待办事项 Web 应用" --retries 3 --retry-interval 60
+```
+
+默认 `--retries 0`，即不重试，保持原有行为。开启后只对白名单信号（queue/timeout/rate limit/429/503/网络瞬断等）重试；不会把普通 prompt 失败或 artifact 缺失当作可重试成功。重试不会放松 `.loop/plan.md`、`.loop/roadmap.md`、`.loop/council.md`、`.loop/verifier-report.md` 等门禁，只影响 coco 调用本身。
+
+重试会增加等待时间和模型调用成本，仅建议在明确遇到排队、限流或临时服务故障时使用。
+
 ## 其余原语
 
 | 原语 | 作用 | 实现 |
 |------|------|------|
-| Skill | 持久化项目知识 | `loop-triage` / `loop-plan` / `loop-execute` / `minimal-fix` / `loop-verifier` |
+| Skill | 持久化项目知识 | `loop-triage` / `loop-plan` / `loop-execute` / `minimal-fix` / `loop-verifier` / `roadmap-draft` / `roadmap-challenge` / `roadmap-arbitrate` |
 | Worktree | 隔离执行 | coco `-w` / `isolation: worktree`；Codex 自带 worktree |
 | State | 记忆 | `STATE.md`（含 append-only Activity Log） |
 | Schedule | 周期触发 | `loop-system run` + cron |
@@ -123,6 +171,9 @@ verifier 默认 REJECT，除非证据充分。
 # L1 单次 triage（coco）
 loop-system run triage
 
+# 项目级拆分：只生成 .loop/roadmap.md，不执行代码
+loop-system run roadmap "从 0 构建一个待办事项 Web 应用"
+
 # 代码健康门禁：语法 + 生成物漂移（适合 CI，结果不随时间漂移）
 loop-system check
 
@@ -136,6 +187,12 @@ loop-system sync --check
 loop-system watch plan "修复某个明确问题" --once
 loop-system watch execute --once
 loop-system watch verify --once
+
+# 重要项目 council roadmap（成本显著高于普通 roadmap）
+loop-system run roadmap --council "从 0 构建一个待办事项 Web 应用"
+
+# coco 排队/限流/超时时 opt-in 重试
+loop-system run roadmap --council "从 0 构建一个待办事项 Web 应用" --retries 3 --retry-interval 60
 
 # 挂 cron：每个工作日 08:00 跑 triage
 # 0 8 * * 1-5  cd /path/to/repo && loop-system run triage >> .loop/cron.log 2>&1
