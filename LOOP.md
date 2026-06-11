@@ -32,7 +32,7 @@ triage（loop-triage，汇报）
    ↓
 @loop-verifier → 校验，输出 APPROVE / REQUEST_CHANGES / REJECT
    ↓ APPROVE 才提 PR；否则回 executor 或升级人工
-更新 STATE.md（含 Activity Log）→ 门禁 verify-loop.sh
+更新 STATE.md（含 Activity Log）→ 门禁 loop-system verify / check
 ```
 
 ## 其余原语
@@ -42,15 +42,15 @@ triage（loop-triage，汇报）
 | Skill | 持久化项目知识 | `loop-triage` / `loop-plan` / `loop-execute` / `minimal-fix` / `loop-verifier` |
 | Worktree | 隔离执行 | coco `-w` / `isolation: worktree`；Codex 自带 worktree |
 | State | 记忆 | `STATE.md`（含 append-only Activity Log） |
-| Schedule | 周期触发 | `scripts/run-loop.sh` + cron |
-| Gate | 产物门禁 | `scripts/verify-loop.sh`（退出码驱动） |
+| Schedule | 周期触发 | `loop-system run triage` + cron |
+| Gate | 产物门禁 | `loop-system verify` / `loop-system check`（退出码驱动） |
 
 ### 单一来源（勿手改生成物）
 
 skill 正文只在 `.agents/skills/<name>/SKILL.md` 维护。`.trae/ .claude/ .codex/` 下的 skill/子代理都是**生成物**。改完正文跑：
 
 ```bash
-bash scripts/sync-skills.sh
+loop-system sync
 ```
 
 
@@ -64,7 +64,7 @@ bash scripts/sync-skills.sh
 
 先跑 L1 一到两周，triage 质量稳定后再开 L2 三角色流程，长期信任后才考虑 L3。
 
-> **L2 fix 前置**：worktree 子代理要求仓库至少有一次 commit（有效 HEAD）。空仓库请先完成初始 commit，否则 `run-loop.sh fix` 会以退出码 2 提示需人工。
+> **L2 fix 前置**：worktree 子代理要求仓库至少有一次 commit（有效 HEAD）。空仓库请先完成初始 commit，否则 `loop-system run fix` 会以退出码 2 提示需人工。
 
 ## 人工门槛（Human Gates）
 
@@ -96,7 +96,7 @@ verifier 默认 REJECT，除非证据充分。
 
 | 工具 | 触发 | 备注 |
 |------|------|------|
-| coco | `bash scripts/run-loop.sh`（cron 调度） | 用 `coco -p` 无头运行 |
+| coco | `loop-system run ...`（cron 调度） | CLI 内部用 `coco -p` 无头运行 |
 | Claude Code | `/loop 1d Run $loop-triage ...` | 内置 /loop |
 | Codex | Automations tab，每日调 `$loop-triage` | 自带 worktree |
 
@@ -104,17 +104,20 @@ verifier 默认 REJECT，除非证据充分。
 
 ```bash
 # L1 单次 triage（coco）
-bash scripts/run-loop.sh triage
+loop-system run triage
 
-# 代码健康门禁：语法 + 生成物漂移（适合 CI，结果不随时间漂移）
-bash scripts/check-loop.sh
+# 代码健康门禁：模块健康 + 生成物漂移（适合 CI，结果不随时间漂移）
+loop-system check
 
 # 运行态门禁：额外检查 STATE 新鲜度（适合本地确认 loop 刚跑过）
-bash scripts/check-loop.sh --state 240
+loop-system check --state 240
 
 # 只检查多工具 skill / agent 生成物是否漂移
-bash scripts/sync-skills.sh --check
+loop-system sync --check
+
+# 开发仓未 npm link 时，也可直接运行源码入口
+node loop-system/bin/loop.mjs check
 
 # 挂 cron：每个工作日 08:00 跑 triage
-# 0 8 * * 1-5  cd /path/to/repo && bash scripts/run-loop.sh triage >> .loop/cron.log 2>&1
+# 0 8 * * 1-5  cd /path/to/repo && loop-system run triage >> .loop/cron.log 2>&1
 ```

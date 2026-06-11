@@ -241,7 +241,7 @@ loop-system sync --check                  # 3. 确认无漂移
 
 ## 11. 本仓库开发（贡献者）
 
-npm 包源码在 `loop-system/`。本仓库根的 `.agents/` 是 skill 真源，`scripts/*.sh` 是早期 bash 版（npm 版已用 Node CLI 取代）。
+npm 包源码在 `loop-system/`。本仓库根的 `.agents/` 是 dogfooding 用 skill 真源，`.trae/.claude/.codex` 是由 `loop-system sync` 生成的多工具配置。
 
 ```bash
 cd loop-system && npm test          # 全量测试

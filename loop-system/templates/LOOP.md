@@ -34,7 +34,7 @@ triage（loop-triage，汇报）
    ↓
 @loop-verifier → 校验，输出 APPROVE / REQUEST_CHANGES / REJECT
    ↓ APPROVE 才提 PR；否则回 executor 或升级人工
-更新 STATE.md（含 Activity Log）→ 门禁 verify-loop.sh
+更新 STATE.md（含 Activity Log）→ 门禁 loop-system verify / check
 ```
 
 ### 项目级 Roadmap
