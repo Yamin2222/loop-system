@@ -1,0 +1,33 @@
+{
+  "name": "@loop/loop-system",
+  "version": "0.1.0",
+  "description": "轻量三角色 loop engineering 系统脚手架与 CLI（coco / Claude Code / Codex）",
+  "type": "module",
+  "bin": {
+    "loop-system": "bin/loop.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "templates",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "keywords": [
+    "loop-engineering",
+    "agent",
+    "ai",
+    "workflow",
+    "coco",
+    "claude-code",
+    "codex"
+  ],
+  "scripts": {
+    "test": "node bin/loop.mjs --help && node lib/check-templates.mjs"
+  },
+  "license": "MIT"
+}
